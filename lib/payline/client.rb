@@ -29,6 +29,7 @@ module Payline
           'ADDRESS.STATE' => 'na',
           'ADDRESS.COUNTRY' => 'ZA',
 
+          'IDENTIFICATION.TRANSACTIONID' => guid
       }
       hash = do_request(params)
       merchant_id = hash['IDENTIFICATION.TRANSACTIONID']

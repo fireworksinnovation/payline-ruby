@@ -19,7 +19,7 @@ module Payline
     def handle_errors(hash)
       if hash['PROCESSING.REASON.CODE'].to_s != '00'
         # Error message should be friendly
-        raise Payline::Error.new(hash['PROCESSING.RETURN'])
+        raise Payline::Error.new(hash['PROCESSING.RETURN'], hash)
       end
     end
   end
