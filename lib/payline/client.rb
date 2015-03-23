@@ -6,9 +6,42 @@ module Payline
       @response_handler = Payline::ResponseHandler.new
     end
 
+    def debit(guid, amount, credit_card)
+      proccess("CC.DB", guid, amount, credit_card)
+    end
+
     def reserve(guid, amount, credit_card)
+      proccess("CC.PA", guid, amount, credit_card)
+    end
+
+    def capture(reserve_response, amount)
       params = {
-          'PAYMENT.CODE' => "CC.PA",
+          'PRESENTATION.CURRENCY' => @config.currency,
+          'PAYMENT.CODE' => "CC.CP",
+          'PRESENTATION.AMOUNT' => amount,
+          'IDENTIFICATION.TRANSACTIONID'=>reserve_response.merchant_reference,
+          'IDENTIFICATION.REFERENCEID'=> reserve_response.transaction_id
+      }
+      do_request(params)
+    end
+
+
+    def reverse(reserve_response, amount)
+      params = {
+          'PRESENTATION.CURRENCY' => @config.currency,
+          'PAYMENT.CODE' => "CC.RV",
+          'PRESENTATION.AMOUNT' => amount,
+          'IDENTIFICATION.TRANSACTIONID'=> reserve_response.merchant_reference,
+          'IDENTIFICATION.REFERENCEID'=> reserve_response.transaction_id
+      }
+      do_request(params)
+    end
+
+    private
+
+    def proccess(code, guid, amount, credit_card)
+      params = {
+          'PAYMENT.CODE' => code,
           'PRESENTATION.AMOUNT' => amount,
           'PRESENTATION.CURRENCY' => @config.currency,
 
@@ -36,30 +69,6 @@ module Payline
       ref_id = hash['IDENTIFICATION.UNIQUEID']
       Payline::ReserveResponse.new(merchant_id, ref_id)
     end
-
-    def capture(reserve_response, amount)
-      params = {
-          'PRESENTATION.CURRENCY' => @config.currency,
-          'PAYMENT.CODE' => "CC.CP",
-          'PRESENTATION.AMOUNT' => amount,
-          'IDENTIFICATION.TRANSACTIONID'=>reserve_response.merchant_reference,
-          'IDENTIFICATION.REFERENCEID'=> reserve_response.transaction_id
-      }
-      do_request(params)
-    end
-
-    def reverse(reserve_response, amount)
-      params = {
-          'PRESENTATION.CURRENCY' => @config.currency,
-          'PAYMENT.CODE' => "CC.RV",
-          'PRESENTATION.AMOUNT' => amount,
-          'IDENTIFICATION.TRANSACTIONID'=> reserve_response.merchant_reference,
-          'IDENTIFICATION.REFERENCEID'=> reserve_response.transaction_id
-      }
-      do_request(params)
-    end
-
-    private
 
     def do_request(params)
       uri = URI(Payline::Urls::PAYMENT)
